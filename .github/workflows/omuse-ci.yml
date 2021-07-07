@@ -102,7 +102,7 @@ jobs:
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: omuse-era5-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
@@ -119,7 +119,7 @@ jobs:
     - name: "Install OMUSE package: omuse-era5"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-era5
-        rm -rf ${TEMP_DIR}/pip-*/
+        rm -rf "${TEMP_DIR}"/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
 
@@ -185,7 +185,7 @@ jobs:
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: omuse-framework-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
@@ -202,7 +202,7 @@ jobs:
     - name: "Install OMUSE package: omuse-framework"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-framework
-        rm -rf ${TEMP_DIR}/pip-*/
+        rm -rf "${TEMP_DIR}"/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
 
@@ -268,7 +268,7 @@ jobs:
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: omuse-iemic-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
@@ -296,7 +296,7 @@ jobs:
     - name: "Install OMUSE package: omuse-iemic"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-iemic
-        rm -rf ${TEMP_DIR}/pip-*/
+        rm -rf "${TEMP_DIR}"/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
 
@@ -362,7 +362,7 @@ jobs:
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: omuse-qgmodel-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
@@ -379,7 +379,7 @@ jobs:
     - name: "Install OMUSE package: omuse-qgmodel"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-qgmodel
-        rm -rf ${TEMP_DIR}/pip-*/
+        rm -rf "${TEMP_DIR}"/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
 
@@ -445,7 +445,7 @@ jobs:
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: omuse-swan-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
@@ -462,7 +462,7 @@ jobs:
     - name: "Install OMUSE package: omuse-swan"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-swan
-        rm -rf ${TEMP_DIR}/pip-*/
+        rm -rf "${TEMP_DIR}"/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
 

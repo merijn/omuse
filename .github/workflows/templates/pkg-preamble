@@ -43,7 +43,7 @@
     - name: Compiler cache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        key: PKG_NAME-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache

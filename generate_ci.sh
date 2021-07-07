@@ -17,16 +17,12 @@ for pkg in `cd "$BASEPATH/packages" && ls -d omuse-*`; do
     printf "  $pkg:\n"
     cat "$BASEPATH/.github/workflows/templates/matrix"
     printf "    name: $pkg - (\${{ join(matrix.*, ', ') }})\n"
-    cat "$BASEPATH/.github/workflows/templates/pkg-preamble"
+    sed "s/PKG_NAME/$pkg/" "$BASEPATH/.github/workflows/templates/pkg-preamble"
+
     if [ -f "$BASEPATH/.github/workflows/templates/deps-$pkg" ]; then
         cat "$BASEPATH/.github/workflows/templates/deps-$pkg"
     fi
-    printf "    - name: \"Install OMUSE package: $pkg\"\n"
-    printf "      run: |\n"
-    printf "        pip install --no-clean --pre --find-links dist/ $pkg\n"
-    printf "        rm -rf "\${TEMP_DIR}"/pip-*/\n"
-    printf "      env:\n"
-    printf "        TEMP_DIR: \${{ steps.get_temp.outputs.TMPDIR }}\n\n"
-    cat "$BASEPATH/.github/workflows/templates/pkg-cleanup"
+
+    sed "s/PKG_NAME/$pkg/" "$BASEPATH/.github/workflows/templates/pkg-install"
     printf "\n"
 done >>"$OUTFILE"

@@ -1,7 +1,0 @@
-    - name: Archive pip failure output
-      uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: build-logs
-        path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
-
