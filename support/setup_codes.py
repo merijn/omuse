@@ -847,7 +847,7 @@ class BuildCodes(CodeCommand):
             output.write('\n')
             output.flush()
         
-        if environment.get('OMUSE_USE_CCACHE', 0) != 1 or "CCACHE_BASEDIR" in environment:
+        if environment.get('OMUSE_USE_CCACHE', 0) != "1" or "CCACHE_BASEDIR" in environment:
             build_environment = environment
         else:
             build_environment = deepcopy(environment)
