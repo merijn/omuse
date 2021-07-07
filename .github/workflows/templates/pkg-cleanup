@@ -1,21 +1,7 @@
-    - name: Amuse config
-      if: always()
-      run: |
-        amusifier --get-amuse-configmk
-        ls /usr/lib/ccache || true
-        ls /usr/local/opt/ccache/libexec || true
-
     - name: Archive pip failure output
       uses: actions/upload-artifact@v2
       if: failure()
       with:
         name: build-logs
         path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
-
-    - name: Ccache log
-      uses: actions/upload-artifact@v2
-      if: always()
-      with:
-        name: ccache-log-${{ matrix.os }}-${{ matrix.gfortran }}
-        path: ${{ github.workspace }}/ccache.log
 

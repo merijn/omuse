@@ -37,8 +37,7 @@ jobs:
       run: |
         cd src/omuse/community/iemic
         make download
-        cd ../../../..
-        cd packages
+        cd ../../../../packages
         ./generate_packages.sh
 
         cd omuse-framework
@@ -48,6 +47,172 @@ jobs:
       with:
         name: sdists-${{ steps.sdists.outputs.VERSION }}
         path: packages/dist/*.tar.gz
+
+  omuse-era5:
+    strategy:
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+        python: [ 3.8 ]
+        java: [ 1.8 ]
+        gfortran: [ gfortran-9, gfortran-10 ]
+
+    name: omuse-era5 - (${{ join(matrix.*, ', ') }})
+    needs: package
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: sdists-${{ needs.package.outputs.version }}
+        path: dist/
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install Python wheel
+      run: |
+        pip install --upgrade pip wheel
+
+    - name: Install OMUSE dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install libopenmpi-dev # gfortran libopenblas-dev libhdf5-openmpi-dev libgsl0-dev cmake libfftw3-3 libfftw3-dev libmpfr6 libmpfr-dev libnetcdf-dev libnetcdff-dev
+
+    - name: Install OMUSE dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install openmpi
+        echo "OMPI_FC=${FC}" >> $GITHUB_ENV
+      env:
+        FC: ${{ matrix.gfortran }}
+
+    - name: Determine temp directory
+      id: get_temp
+      run: |
+        echo "::set-output name=TMPDIR::${TMPDIR:-/tmp/}"
+
+    - name: Compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        max-size: 5000M
+
+    - name: Point compilers at ccache
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "OMUSE_USE_CCACHE=1" >> $GITHUB_ENV
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
+
+    - name: "Install OMUSE package: omuse-era5"
+      run: |
+        pip install --no-clean --pre --find-links dist/ omuse-era5
+        rm -rf ${TEMP_DIR}/pip-*/
+      env:
+        TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
+
+    - name: Archive pip failure output
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: build-logs
+        path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
+
+
+  omuse-framework:
+    strategy:
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+        python: [ 3.8 ]
+        java: [ 1.8 ]
+        gfortran: [ gfortran-9, gfortran-10 ]
+
+    name: omuse-framework - (${{ join(matrix.*, ', ') }})
+    needs: package
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: sdists-${{ needs.package.outputs.version }}
+        path: dist/
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install Python wheel
+      run: |
+        pip install --upgrade pip wheel
+
+    - name: Install OMUSE dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install libopenmpi-dev # gfortran libopenblas-dev libhdf5-openmpi-dev libgsl0-dev cmake libfftw3-3 libfftw3-dev libmpfr6 libmpfr-dev libnetcdf-dev libnetcdff-dev
+
+    - name: Install OMUSE dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install openmpi
+        echo "OMPI_FC=${FC}" >> $GITHUB_ENV
+      env:
+        FC: ${{ matrix.gfortran }}
+
+    - name: Determine temp directory
+      id: get_temp
+      run: |
+        echo "::set-output name=TMPDIR::${TMPDIR:-/tmp/}"
+
+    - name: Compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        max-size: 5000M
+
+    - name: Point compilers at ccache
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "OMUSE_USE_CCACHE=1" >> $GITHUB_ENV
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
+
+    - name: "Install OMUSE package: omuse-framework"
+      run: |
+        pip install --no-clean --pre --find-links dist/ omuse-framework
+        rm -rf ${TEMP_DIR}/pip-*/
+      env:
+        TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
+
+    - name: Archive pip failure output
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: build-logs
+        path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
+
 
   omuse-iemic:
     strategy:
@@ -110,13 +275,12 @@ jobs:
       run: |
         echo "/usr/lib/ccache" >> $GITHUB_PATH
         echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "OMUSE_USE_CCACHE=1" >> $GITHUB_ENV
         echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
         echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
         echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
         echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
-        echo "CCACHE_LOGFILE=$GITHUB_WORKSPACE/ccache.log" >> $GITHUB_ENV
         echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
-
 
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'
@@ -132,15 +296,9 @@ jobs:
     - name: "Install OMUSE package: omuse-iemic"
       run: |
         pip install --no-clean --pre --find-links dist/ omuse-iemic
+        rm -rf ${TEMP_DIR}/pip-*/
       env:
         TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
-
-    - name: Amuse config
-      if: always()
-      run: |
-        amusifier --get-amuse-configmk
-        ls /usr/lib/ccache || true
-        ls /usr/local/opt/ccache/libexec || true
 
     - name: Archive pip failure output
       uses: actions/upload-artifact@v2
@@ -149,11 +307,170 @@ jobs:
         name: build-logs
         path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
 
-    - name: Ccache log
-      uses: actions/upload-artifact@v2
-      if: always()
+
+  omuse-qgmodel:
+    strategy:
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+        python: [ 3.8 ]
+        java: [ 1.8 ]
+        gfortran: [ gfortran-9, gfortran-10 ]
+
+    name: omuse-qgmodel - (${{ join(matrix.*, ', ') }})
+    needs: package
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/download-artifact@v2
       with:
-        name: ccache-log-${{ matrix.os }}-${{ matrix.gfortran }}
-        path: ${{ github.workspace }}/ccache.log
+        name: sdists-${{ needs.package.outputs.version }}
+        path: dist/
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install Python wheel
+      run: |
+        pip install --upgrade pip wheel
+
+    - name: Install OMUSE dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install libopenmpi-dev # gfortran libopenblas-dev libhdf5-openmpi-dev libgsl0-dev cmake libfftw3-3 libfftw3-dev libmpfr6 libmpfr-dev libnetcdf-dev libnetcdff-dev
+
+    - name: Install OMUSE dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install openmpi
+        echo "OMPI_FC=${FC}" >> $GITHUB_ENV
+      env:
+        FC: ${{ matrix.gfortran }}
+
+    - name: Determine temp directory
+      id: get_temp
+      run: |
+        echo "::set-output name=TMPDIR::${TMPDIR:-/tmp/}"
+
+    - name: Compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        max-size: 5000M
+
+    - name: Point compilers at ccache
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "OMUSE_USE_CCACHE=1" >> $GITHUB_ENV
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
+
+    - name: "Install OMUSE package: omuse-qgmodel"
+      run: |
+        pip install --no-clean --pre --find-links dist/ omuse-qgmodel
+        rm -rf ${TEMP_DIR}/pip-*/
+      env:
+        TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
+
+    - name: Archive pip failure output
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: build-logs
+        path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
+
+
+  omuse-swan:
+    strategy:
+      matrix:
+        os: [ macos-latest, ubuntu-latest ]
+        python: [ 3.8 ]
+        java: [ 1.8 ]
+        gfortran: [ gfortran-9, gfortran-10 ]
+
+    name: omuse-swan - (${{ join(matrix.*, ', ') }})
+    needs: package
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: sdists-${{ needs.package.outputs.version }}
+        path: dist/
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install Python wheel
+      run: |
+        pip install --upgrade pip wheel
+
+    - name: Install OMUSE dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install libopenmpi-dev # gfortran libopenblas-dev libhdf5-openmpi-dev libgsl0-dev cmake libfftw3-3 libfftw3-dev libmpfr6 libmpfr-dev libnetcdf-dev libnetcdff-dev
+
+    - name: Install OMUSE dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install openmpi
+        echo "OMPI_FC=${FC}" >> $GITHUB_ENV
+      env:
+        FC: ${{ matrix.gfortran }}
+
+    - name: Determine temp directory
+      id: get_temp
+      run: |
+        echo "::set-output name=TMPDIR::${TMPDIR:-/tmp/}"
+
+    - name: Compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.gfortran }}
+        max-size: 5000M
+
+    - name: Point compilers at ccache
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "OMUSE_USE_CCACHE=1" >> $GITHUB_ENV
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
+
+    - name: "Install OMUSE package: omuse-swan"
+      run: |
+        pip install --no-clean --pre --find-links dist/ omuse-swan
+        rm -rf ${TEMP_DIR}/pip-*/
+      env:
+        TEMP_DIR: ${{ steps.get_temp.outputs.TMPDIR }}
+
+    - name: Archive pip failure output
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: build-logs
+        path: ${{ steps.get_temp.outputs.TMPDIR }}/pip-*/
 
 

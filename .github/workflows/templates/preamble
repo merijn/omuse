@@ -37,8 +37,7 @@ jobs:
       run: |
         cd src/omuse/community/iemic
         make download
-        cd ../../../..
-        cd packages
+        cd ../../../../packages
         ./generate_packages.sh
 
         cd omuse-framework

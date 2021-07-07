@@ -13,7 +13,7 @@ else
 fi
 
 cat "$BASEPATH/.github/workflows/templates/preamble" >"$OUTFILE"
-for pkg in `cd "$BASEPATH/packages" && ls -d omuse-iemic`; do
+for pkg in `cd "$BASEPATH/packages" && ls -d omuse-*`; do
     printf "  $pkg:\n"
     cat "$BASEPATH/.github/workflows/templates/matrix"
     printf "    name: $pkg - (\${{ join(matrix.*, ', ') }})\n"
@@ -24,7 +24,7 @@ for pkg in `cd "$BASEPATH/packages" && ls -d omuse-iemic`; do
     printf "    - name: \"Install OMUSE package: $pkg\"\n"
     printf "      run: |\n"
     printf "        pip install --no-clean --pre --find-links dist/ $pkg\n"
-#    printf "        rm -rf "\${TEMP_DIR}"/pip-*/\n"
+    printf "        rm -rf "\${TEMP_DIR}"/pip-*/\n"
     printf "      env:\n"
     printf "        TEMP_DIR: \${{ steps.get_temp.outputs.TMPDIR }}\n\n"
     cat "$BASEPATH/.github/workflows/templates/pkg-cleanup"
