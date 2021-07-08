@@ -5,6 +5,8 @@ on:
     branches: [ '*' ]
   pull_request:
     branches: [ master ]
+  release:
+    types: [ 'prereleased', 'released' ]
 
 jobs:
   package:
@@ -44,7 +46,17 @@ jobs:
         echo "::set-output name=VERSION::$(python setup.py --version)"
 
     - uses: actions/upload-artifact@v2
+      if: ${{ github.event != 'release' }}
       with:
         name: sdists-${{ steps.sdists.outputs.VERSION }}
         path: packages/dist/*.tar.gz
+
+    - name: Test PyPI upload
+      if: ${{ github.event == 'release' }}
+      run: |
+        python -m pip install twine
+        python -m twine upload --repository testpypi packages/dist/*.tar.gz
+      env:
+        TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
+        TWINE_USERNAME: __token__
 

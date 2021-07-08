@@ -4,6 +4,7 @@
 
     steps:
     - uses: actions/download-artifact@v2
+      if: ${{ github.event != 'release' }}
       with:
         name: sdists-${{ needs.package.outputs.version }}
         path: dist/
@@ -41,12 +42,14 @@
         echo "::set-output name=TMPDIR::${TMPDIR:-/tmp/}"
 
     - name: Compiler cache
+      if: ${{ github.event != 'release' }}
       uses: hendrikmuhs/ccache-action@v1
       with:
         key: PKG_NAME-${{ matrix.os }}-${{ matrix.gfortran }}
         max-size: 5000M
 
     - name: Point compilers at ccache
+      if: ${{ github.event != 'release' }}
       run: |
         echo "/usr/lib/ccache" >> $GITHUB_PATH
         echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
